@@ -103,12 +103,18 @@ class Preprocessor(BasePreprocessor):
         else:
             config = self._config
 
+        self.logger.debug(f'Config for the current diagram: {config}')
+
         if not isinstance(body, dict):
             self.logger.debug('Parsing diagram body as YAML string')
 
             body = load(body, Loader)
 
+        self.logger.debug(f'Diagram definition without config: {body}')
+
         diagram_definition = {**config, **body}
+
+        self.logger.debug(f'Full diagram definition with config: {diagram_definition}')
 
         engine = diagram_definition.get('engine', 'dot')
 
@@ -123,7 +129,7 @@ class Preprocessor(BasePreprocessor):
 
                 self.logger.warning(warning_message)
 
-            self._modules[options['module_id']] = diagram_definition
+            self._modules[options['module_id']] = body
 
             diagram_gv_file_path = Path(self._cache_dir_path / f'custom_{options["module_id"]}.gv').resolve()
             self._generate_gv_source(diagram_definition, diagram_gv_file_path)
@@ -159,7 +165,11 @@ class Preprocessor(BasePreprocessor):
 
             body = load(body, Loader)
 
+        self.logger.debug(f'Multi-module diagram full description: {body}')
+
         structure = body.get('structure', {})
+
+        self.logger.debug(f'Multi-module diagram structure: {structure}')
 
         for structure_item in structure:
             module_reference = structure_item.get('module', None)
@@ -192,19 +202,19 @@ class Preprocessor(BasePreprocessor):
 
     def process_archeme(self, content: str, action: str) -> str:
         def _sub(archeme_definition) -> str:
-            archeme_definition_options = self.get_options(archeme_definition.group('options'))
-            tag_action = archeme_definition_options.pop('action', self.options['action'])
+            options = self.get_options(archeme_definition.group('options'))
+            required_action = options.pop('action', self.options['action'])
 
             self.logger.debug(
-                f'Archeme definition found, current action: {action}, required action: {tag_action}, ' +
-                f'options: {archeme_definition_options}'
+                f'Archeme definition found, current action: {action}, required action: {required_action}, ' +
+                f'options: {options}'
             )
 
-            if action == 'generate' and tag_action == 'generate':
-                return self._archeme_generate(archeme_definition_options, archeme_definition.group('body'))
+            if action == 'generate' and required_action == 'generate':
+                return self._archeme_generate(options, archeme_definition.group('body'))
 
-            elif action == 'merge' and tag_action == 'merge':
-                return self._archeme_merge(archeme_definition_options, archeme_definition.group('body'))
+            elif action == 'merge' and required_action == 'merge':
+                return self._archeme_merge(options, archeme_definition.group('body'))
 
             else:
                 self.logger.debug('Skipping')

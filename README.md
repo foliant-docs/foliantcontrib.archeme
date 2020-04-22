@@ -108,4 +108,4 @@ structure:
 </archeme>
 ```
 
-Note that the `file` and `description` module parameters in Archeme DSL works as usual. If you need to combine the diagrams that are identified within the current Foliant project by using `<<archeme id="...">` tags, you should to omit the `file` and `description` module parameters in your combined diagrams definitions.
+Note that the `file` and `description` module parameters in Archeme DSL work as usual. If you need to combine the diagrams that are identified within the current Foliant project by using `<<archeme id="...">` tags, you should to omit the `file` and `description` module parameters in your combined diagrams definitions.
