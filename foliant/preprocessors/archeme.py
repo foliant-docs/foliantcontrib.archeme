@@ -121,6 +121,11 @@ class Preprocessor(BasePreprocessor):
         format = options.get('format', None) or self.options['format']
 
         if options.get('module_id', None):
+            diagram_gv_file_path = Path(self._cache_dir_path / f'custom_{options["module_id"]}.gv').resolve()
+            self._generate_gv_source(diagram_definition, diagram_gv_file_path)
+            diagram_image_file_path = Path(self._cache_dir_path / f'custom_{options["module_id"]}.{format}').resolve()
+            self._draw_diagram(engine, format, diagram_gv_file_path, diagram_image_file_path)
+
             self.logger.debug(f'Remembering module {options["module_id"]}')
 
             if options['module_id'] in self._modules.keys():
@@ -131,10 +136,7 @@ class Preprocessor(BasePreprocessor):
 
             self._modules[options['module_id']] = body
 
-            diagram_gv_file_path = Path(self._cache_dir_path / f'custom_{options["module_id"]}.gv').resolve()
-            self._generate_gv_source(diagram_definition, diagram_gv_file_path)
-            diagram_image_file_path = Path(self._cache_dir_path / f'custom_{options["module_id"]}.{format}').resolve()
-            self._draw_diagram(engine, format, diagram_gv_file_path, diagram_image_file_path)
+            self.logger.debug(f'Remembered module description: {self._modules[options["module_id"]]}')
 
         else:
             diagram_hash = md5(str(diagram_definition).encode()).hexdigest()
@@ -184,7 +186,10 @@ class Preprocessor(BasePreprocessor):
                         self.logger.debug(f'No description or file specified for module, using remembered data')
 
                         if module_id in self._modules.keys():
-                            self.logger.debug(f'Taking remembered description for the module {module_id}')
+                            self.logger.debug(
+                                f'Taking remembered description for the module {module_id}: ' +
+                                f'{self._modules[module_id]}'
+                            )
 
                             module_reference['description'] = self._modules[module_id]
 
