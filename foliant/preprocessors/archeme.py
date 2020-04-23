@@ -3,6 +3,7 @@ Archeme integration Preprocessor for Foliant documentation authoring tool.
 '''
 
 import re
+from copy import deepcopy
 from pathlib import Path
 from hashlib import md5
 from subprocess import run, PIPE, STDOUT, CalledProcessError
@@ -58,7 +59,7 @@ class Preprocessor(BasePreprocessor):
         diagram_gv_file_path.parent.mkdir(parents=True, exist_ok=True)
 
         with open(diagram_gv_file_path, 'w', encoding='utf8') as diagram_gv_file:
-            diagram_gv_file.write(GenerateGraphvizSource().generate_graphviz_source(diagram_definition))
+            diagram_gv_file.write(GenerateGraphvizSource().generate_graphviz_source(deepcopy(diagram_definition)))
 
         return None
 
@@ -121,11 +122,6 @@ class Preprocessor(BasePreprocessor):
         format = options.get('format', None) or self.options['format']
 
         if options.get('module_id', None):
-            diagram_gv_file_path = Path(self._cache_dir_path / f'custom_{options["module_id"]}.gv').resolve()
-            self._generate_gv_source(diagram_definition, diagram_gv_file_path)
-            diagram_image_file_path = Path(self._cache_dir_path / f'custom_{options["module_id"]}.{format}').resolve()
-            self._draw_diagram(engine, format, diagram_gv_file_path, diagram_image_file_path)
-
             self.logger.debug(f'Remembering module {options["module_id"]}')
 
             if options['module_id'] in self._modules.keys():
@@ -137,6 +133,11 @@ class Preprocessor(BasePreprocessor):
             self._modules[options['module_id']] = body
 
             self.logger.debug(f'Remembered module description: {self._modules[options["module_id"]]}')
+
+            diagram_gv_file_path = Path(self._cache_dir_path / f'custom_{options["module_id"]}.gv').resolve()
+            self._generate_gv_source(diagram_definition, diagram_gv_file_path)
+            diagram_image_file_path = Path(self._cache_dir_path / f'custom_{options["module_id"]}.{format}').resolve()
+            self._draw_diagram(engine, format, diagram_gv_file_path, diagram_image_file_path)
 
         else:
             diagram_hash = md5(str(diagram_definition).encode()).hexdigest()
