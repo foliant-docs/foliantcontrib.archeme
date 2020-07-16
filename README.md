@@ -1,3 +1,5 @@
+[![](https://img.shields.io/pypi/v/foliantcontrib.archeme.svg)](https://pypi.org/project/foliantcontrib.archeme/) [![](https://img.shields.io/github/v/tag/foliant-docs/foliantcontrib.archeme.svg?label=GitHub)](https://github.com/foliant-docs/foliantcontrib.archeme)
+
 # Archeme
 
 Archeme preprocessor allows to integrate Foliant with [Archeme](https://github.com/foliant-docs/archeme/), a tool for describing and visualizing schemes and diagrams, primarily architectural. Archeme requires [Graphviz](https://www.graphviz.org/) to be installed.
@@ -57,10 +59,10 @@ Some values of options specified in the project config may be overridden by tag 
 
 ## Usage
 
-To insert an Archeme diagram definition into your Markdown source, enclose it between `<<archeme>...</archeme>` tags:
+To insert an Archeme diagram definition into your Markdown source, enclose it between `<archeme>...</archeme>` tags:
 
 ```markdown
-<<archeme>
+<archeme>
 structure:
     - node:
         id: first
@@ -84,7 +86,7 @@ You may use optional tag attributes:
 Diagram definition with explicitly specified ID, config file, and output format:
 
 ```markdown
-<<archeme id="one" config_file="!project_path another_config.yml" format="svg">
+<archeme id="one" config_file="!project_path another_config.yml" format="svg">
 structure:
     - node:
         id: first
@@ -99,7 +101,7 @@ edges:
 Archeme DSL definition that prescribes to combine two modules with explicitly specified IDs:
 
 ```markdown
-<<archeme action="merge">
+<archeme action="merge">
 structure:
     - module:
         id: one
@@ -108,4 +110,4 @@ structure:
 </archeme>
 ```
 
-Note that the `file` and `description` module parameters in Archeme DSL work as usual. If you need to combine the diagrams that are identified within the current Foliant project by using `<<archeme id="...">` tags, you should to omit the `file` and `description` module parameters in your combined diagrams definitions.
+Note that the `file` and `description` module parameters in Archeme DSL work as usual. If you need to combine the diagrams that are identified within the current Foliant project by using `<archeme id="...">` tags, you should to omit the `file` and `description` module parameters in your combined diagrams definitions.
