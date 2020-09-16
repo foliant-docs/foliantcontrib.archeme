@@ -7,7 +7,7 @@ from copy import deepcopy
 from pathlib import Path
 from hashlib import md5
 from subprocess import run, PIPE, STDOUT, CalledProcessError
-from yaml import load, Loader
+from yaml import load, Loader, dump
 from typing import Dict
 OptionValue = int or float or bool or str
 
@@ -26,8 +26,9 @@ class Preprocessor(BasePreprocessor):
             'neato': 'neato',
             'fdp': 'fdp',
         },
-        'action': 'generate',
+        'config_concat': False,
         'config_file': None,
+        'action': 'generate',
         'format': 'png',
         'targets': []
     }
@@ -41,13 +42,23 @@ class Preprocessor(BasePreprocessor):
 
         self.logger = self.logger.getChild('archeme')
 
-        self._config = {}
+        if self.options['config_concat']:
+            self._config = ''
 
-        if self.options['config_file']:
-            self.logger.debug('Reading default config from user-specified file')
+            if self.options['config_file']:
+                self.logger.debug('Reading default config as a string from user-specified file')
 
-            with open(Path(self.options['config_file']).resolve()) as config_file:
-                self._config = load(config_file, Loader)
+                with open(Path(self.options['config_file']).resolve(), encoding='utf8') as config_file:
+                    self._config = config_file.read()
+
+        else:
+            self._config = {}
+
+            if self.options['config_file']:
+                self.logger.debug('Loading default config as an object from user-specified file')
+
+                with open(Path(self.options['config_file']).resolve()) as config_file:
+                    self._config = load(config_file, Loader)
 
         self._modules = {}
 
@@ -95,30 +106,68 @@ class Preprocessor(BasePreprocessor):
         return None
 
     def _archeme_generate(self, options: OptionValue, body: str or dict) -> str:
-        if options.get('config_file', None):
-            self.logger.debug(f'Reading current config from user-specified file: {options["config_file"]}')
+        self.logger.debug(f'Config concatenation mode: {self.options["config_concat"]}')
 
-            with open(Path(options['config_file']).resolve()) as config_file:
-                config = load(config_file, Loader)
+        if options.get('config_file', None):
+            if self.options['config_concat']:
+                self.logger.debug(f'Reading current config as a string from user-specified file: {options["config_file"]}')
+
+                with open(Path(options['config_file']).resolve(), encoding='utf8') as config_file:
+                    config = config_file.read()
+
+            else:
+                self.logger.debug(f'Loading current config as an object from user-specified file: {options["config_file"]}')
+
+                with open(Path(options['config_file']).resolve()) as config_file:
+                    config = load(config_file, Loader)
 
         else:
+            self.logger.debug('Using default config for this diagram')
+
             config = self._config
 
-        self.logger.debug(f'Config for the current diagram: {config}')
+        if self.options['config_concat']:
+            if config:
+                config += '\n'
 
-        if not isinstance(body, dict):
-            self.logger.debug('Parsing diagram body as YAML string')
+            if isinstance(body, str):
+                self.logger.debug(
+                    'Diagram body is a string, loading the concatenation of config and body as an object'
+                )
 
-            body = load(body, Loader)
+                diagram_definition = load(config + body, Loader)
 
-        self.logger.debug(f'Diagram definition without config: {body}')
+            else:
+                if config:
+                    self.logger.debug(
+                        'Diagram body is an object, dumping it into a string, concatenating with config, ' +
+                        'loading concatenation result as an object'
+                    )
 
-        diagram_definition = {**config, **body}
+                    body = dump(body, allow_unicode=True)
+                    diagram_definition = load(config + body, Loader)
 
-        self.logger.debug(f'Full diagram definition with config: {diagram_definition}')
+                else:
+                    self.logger.debug(
+                        'Diagram body is an object, no config specified, loading diagram body as an object'
+                    )
+
+                    diagram_definition = body
+
+        else:
+            if isinstance(body, str):
+                self.logger.debug('Diagram body is a string, loading it as an object')
+
+                body = load(body, Loader)
+
+            self.logger.debug(f'Diagram definition without config: {body}')
+            self.logger.debug('Merging diagram definition with config')
+
+            diagram_definition = {**config, **body}
+
+        self.logger.debug(f'Full diagram definition: {diagram_definition}')
 
         engine = diagram_definition.get('engine', 'dot')
-
         format = options.get('format', None) or self.options['format']
 
         if options.get('module_id', None):
@@ -129,6 +178,9 @@ class Preprocessor(BasePreprocessor):
                 output(warning_message, self.quiet)
 
                 self.logger.warning(warning_message)
+
+            if isinstance(body, str):
+                body = load(body, Loader)
 
             self._modules[options['module_id']] = body
 
