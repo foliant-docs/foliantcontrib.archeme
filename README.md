@@ -31,8 +31,9 @@ preprocessors:
             dot: dot
             neato: neato
             fdp: fdp
-        action: generate
+        config_concat: false
         config_file: null
+        action: generate
         format: png
         targets: []
 ```
@@ -45,14 +46,17 @@ Some values of options specified in the project config may be overridden by tag 
 `graphviz_paths`
 :   Paths to binaries of Graphviz engines to be used in external commands: `dot`, `neato`, and `fdp`.
 
-`action`
-:   Default action. Used when the respective `action` tag attribute is not specified explicitly, see below. Available values are: `generate` (default), and `merge` ([see descriptions in Archeme documentation](https://github.com/foliant-docs/archeme/#cli-usage)). 
+`config_concat`
+:   Flag that tells the preprocessor to read the config file and the diagram definition as YAML strings, concatenate these strings, and then load the concatenation result, i.e. single YAML string, as an object. If this option is not set (by default), config and diagram definition will be loaded as separate objects, and then merged. This option may be useful when some aliases are defined in the config, and you would like to use their values in the diagram definition.
 
 `config_file`
 :   Path to default config file. May be overridden with the value of the respective `config_file` tag attribute, see below. Config file usually defines common settings of multiple diagrams, it’s recommended but not strictly required. By default, no config file is used.
 
+`action`
+:   Default action. Used when the respective `action` tag attribute is not specified explicitly, see below. Available values are: `generate` (default), and `merge` ([see descriptions in Archeme documentation](https://github.com/foliant-docs/archeme/#cli-usage)). 
+
 `format`
-:   Format of the output image. May take any value supported by Graphviz, but note that drawn images are used within Markdown content that will be rendered by one or another backend. Preferred values are: `png` (default), and `svg`.
+:   Format of the output image. May take any value supported by Graphviz, but note that drawn images are used within Markdown content that will be rendered by one or another backend. Preferred values are: `png` (default), and `svg`. The value of this option may be overridden by the respective `format` tag attribute.
 
 `targets`
 :   Allowed targets for the preprocessor. If not specified (by default), the preprocessor applies to all targets. Limitation of available targets may be useful when it’s needed to build a certain Foliant project in different ways with various settings, e.g. as a stand-alone documentation (for example, with the `site` target), and as a part of a documentation that combines several Foliant projects (in this case the `pre` target is usually used).
@@ -76,7 +80,8 @@ edges:
 
 You may use optional tag attributes:
 
-* `id`—to specify an unique ID of the diagram that may be used for merging multiple diagram definitions;
+* `caption`—to set an alternative text description of the diagram that may be rendered as image caption by some backends;
+* `module_id`—to specify an unique ID of the diagram that may be used for merging multiple diagram definitions;
 * `action`—action that should be applied to the diagram definition; the available values are `generate` and `merge`; this attribute overrides the respective `action` config option;
 * `config_file`—path to a specific config file for the certain diagram definition; this attribute overrides the respective `config_file` config option;
 * `format`—output image format for the certain diagram definition; this attribute overrides the respective `format` config option.
@@ -86,7 +91,7 @@ You may use optional tag attributes:
 Diagram definition with explicitly specified ID, config file, and output format:
 
 ```markdown
-<archeme id="one" config_file="!project_path another_config.yml" format="svg">
+<archeme module_id="one" caption="Module 1" config_file="!project_path another_config.yml" format="svg">
 structure:
     - node:
         id: first
@@ -110,4 +115,4 @@ structure:
 </archeme>
 ```
 
-Note that the `file` and `description` module parameters in Archeme DSL work as usual. If you need to combine the diagrams that are identified within the current Foliant project by using `<archeme id="...">` tags, you should to omit the `file` and `description` module parameters in your combined diagrams definitions.
+Note that the `file` and `description` module parameters in Archeme DSL work as usual. If you need to combine the diagrams that are identified within the current Foliant project by using `<archeme module_id="...">` tags, you should to omit the `file` and `description` module parameters in your combined diagrams definitions.
